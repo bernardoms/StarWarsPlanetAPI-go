@@ -2,26 +2,27 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/logger"
 	"net/http"
 )
 
 type SwapiClient struct {
 	Endpoint string
+	log      *logger.Logger
 }
 
-
-func NewSwapiClient(endpoint string) *SwapiClient {
+func NewSwapiClient(endpoint string, log *logger.Logger) *SwapiClient {
 	s := new(SwapiClient)
 	s.Endpoint = endpoint
+	s.log = log
 	return s
 }
 
-func  (s SwapiClient) GetPlanetByName(name string) (*SwapiPlanet, error) {
+func (s SwapiClient) GetPlanetByName(name string) (*SwapiPlanet, error) {
 	resp, err := http.Get(s.Endpoint + "planets?search=" + name)
 
 	if err != nil {
-		fmt.Print(err)
+		s.log.LogWithFields(nil, "error", map[string]interface{}{"err": "error get planet from swapi client"}, err.Error())
 		return nil, err
 	}
 
@@ -34,7 +35,7 @@ func  (s SwapiClient) GetPlanetByName(name string) (*SwapiPlanet, error) {
 	err = json.NewDecoder(resp.Body).Decode(&swapi)
 
 	if err != nil {
-		fmt.Print(err)
+		s.log.LogWithFields(nil, "error", map[string]interface{}{"err": "error unmarshalling response"}, err.Error())
 	}
 
 	_ = resp.Body.Close()

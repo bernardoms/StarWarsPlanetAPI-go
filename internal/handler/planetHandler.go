@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/client"
+	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/logger"
 	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/repository"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -12,9 +13,9 @@ import (
 )
 
 type PlanetRequest struct {
-	Name               string             `bson:"name"`
-	Weather            string             `bson:"weather"`
-	Land               string             `bson:"land"`
+	Name    string `bson:"name"`
+	Weather string `bson:"weather"`
+	Land    string `bson:"land"`
 }
 
 type ResponseError struct {
@@ -24,17 +25,20 @@ type ResponseError struct {
 type PlanetHandler struct {
 	swapiClient client.SwapiClientInterface
 	repository  repository.PlanetRepositoryInterface
+	log         *logger.Logger
 }
 
 var decoder = schema.NewDecoder()
 
 func NewPlanetHandler(mongo repository.PlanetRepositoryInterface,
-	swapiClient client.SwapiClientInterface) *PlanetHandler{
+	swapiClient client.SwapiClientInterface,
+	logger *logger.Logger) *PlanetHandler {
 
 	planetHandler := new(PlanetHandler)
 
 	planetHandler.swapiClient = swapiClient
 	planetHandler.repository = mongo
+	planetHandler.log = logger
 
 	return planetHandler
 }
@@ -46,6 +50,7 @@ func (p *PlanetHandler) GetPlanets(w http.ResponseWriter, r *http.Request) {
 	planets, err := p.repository.FindAll(*filter)
 
 	if err != nil {
+		p.log.LogWithFields(r, "error", nil, err.Error())
 		respondWithJson(w, http.StatusInternalServerError, ResponseError{Description: err.Error()})
 		return
 	}
@@ -58,15 +63,15 @@ func (p *PlanetHandler) GetPlanetById(w http.ResponseWriter, r *http.Request) {
 
 	objectId, err := primitive.ObjectIDFromHex(vars["planetId"])
 	if err != nil {
+		p.log.LogWithFields(r, "info", nil, "planet id is not a valid id")
 		respondWithJson(w, http.StatusBadRequest, ResponseError{Description: "planet id is not a valid id"})
 		return
 	}
-	
+
 	foundPlanet, err := p.repository.FindById(objectId)
 
 	if err != nil {
-		//f := map[string]interface{}{"msg": err}
-		//u.Logger.LogWithFields(r, "error", f)
+		p.log.LogWithFields(r, "error", nil, err.Error())
 		respondWithJson(w, http.StatusInternalServerError, ResponseError{Description: err.Error()})
 		return
 	}
@@ -79,6 +84,7 @@ func (p *PlanetHandler) RemovePlanetById(w http.ResponseWriter, r *http.Request)
 
 	objectId, err := primitive.ObjectIDFromHex(vars["planetId"])
 	if err != nil {
+		p.log.LogWithFields(r, "info", nil, "planet id is not a valid id")
 		respondWithJson(w, http.StatusBadRequest, ResponseError{Description: "planet id is not a valid id"})
 		return
 	}
@@ -86,8 +92,7 @@ func (p *PlanetHandler) RemovePlanetById(w http.ResponseWriter, r *http.Request)
 	err = p.repository.Delete(objectId)
 
 	if err != nil {
-		//f := map[string]interface{}{"msg": err}
-		//u.Logger.LogWithFields(r, "error", f)
+		p.log.LogWithFields(r, "error", nil, err.Error())
 		respondWithJson(w, http.StatusInternalServerError, ResponseError{Description: err.Error()})
 		return
 	}
@@ -102,22 +107,21 @@ func (p *PlanetHandler) SavePlanet(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&planetRequest)
 
 	if err != nil {
+		p.log.LogWithFields(r, "error", nil, err.Error())
 		log.Println("error unmarshalling the request body", err)
 	}
 
 	planets, err := p.swapiClient.GetPlanetByName(planetRequest.Name)
 
 	if err != nil {
-		log.Println("error getting planets from swapi api", err)
+		p.log.LogWithFields(r, "error", map[string]interface{}{"err": "error getting planets from swapi api"}, err.Error())
 		respondWithJson(w, http.StatusInternalServerError, ResponseError{Description: err.Error()})
 		return
 	}
 
 	if planets == nil {
-		log.Println("planet not found on star wars world")
-
+		p.log.LogWithFields(r, "info", map[string]interface{}{"planet": planetRequest.Name}, "planet not found")
 		respondWithEmpty(w, http.StatusNotFound, "")
-
 		return
 	}
 
@@ -132,12 +136,12 @@ func (p *PlanetHandler) SavePlanet(w http.ResponseWriter, r *http.Request) {
 	savedPlanet, err := p.repository.Save(planet)
 
 	if err != nil {
-		log.Println("error saving planet", err)
+		p.log.LogWithFields(r, "error", map[string]interface{}{"err": "error creating planet"}, err.Error())
 		respondWithJson(w, http.StatusInternalServerError, ResponseError{Description: err.Error()})
 		return
 	}
 
-	respondWithEmpty(w, http.StatusCreated, "v1/planets/" + savedPlanet.Id.Hex())
+	respondWithEmpty(w, http.StatusCreated, "v1/planets/"+savedPlanet.Id.Hex())
 }
 
 func respondWithEmpty(w http.ResponseWriter, code int, location string) {

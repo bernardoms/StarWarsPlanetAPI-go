@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	config2 "github.com/bernardoms/StarWarsPlanetAPI-GO/config"
+	"github.com/bernardoms/StarWarsPlanetAPI-GO/config"
 	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/client"
 	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/handler"
+	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/logger"
 	"github.com/bernardoms/StarWarsPlanetAPI-GO/internal/repository"
 	"github.com/gorilla/mux"
 	newrelic "github.com/newrelic/go-agent"
@@ -24,15 +25,17 @@ func main() {
 		log.Print("Error starting new relic agent")
 	}
 
-	config := config2.NewMongoConfig()
+	mongoConfig := config.NewMongoConfig()
 
-	mongo := repository.NewSession(*config)
+	mongo := repository.NewSession(*mongoConfig)
 
-	swapiClient := client.NewSwapiClient("https://swapi.dev/api/")
+	newLogger := logger.NewLogger(config.NewLoggerConfig())
+
+	swapiClient := client.NewSwapiClient("https://swapi.dev/api/", newLogger)
 
 	r := mux.NewRouter()
 
-	planetHandler := handler.NewPlanetHandler(mongo, swapiClient)
+	planetHandler := handler.NewPlanetHandler(mongo, swapiClient, newLogger)
 
 	nrgorilla.InstrumentRoutes(r, app)
 
