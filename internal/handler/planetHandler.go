@@ -25,14 +25,14 @@ type ResponseError struct {
 type PlanetHandler struct {
 	swapiClient client.SwapiClientInterface
 	repository  repository.PlanetRepositoryInterface
-	log         *logger.Logger
+	log         logger.Interface
 }
 
 var decoder = schema.NewDecoder()
 
 func NewPlanetHandler(mongo repository.PlanetRepositoryInterface,
 	swapiClient client.SwapiClientInterface,
-	logger *logger.Logger) *PlanetHandler {
+	logger logger.Interface) *PlanetHandler {
 
 	planetHandler := new(PlanetHandler)
 

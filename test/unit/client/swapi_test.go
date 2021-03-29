@@ -2,6 +2,7 @@ package client
 
 import (
 	client2 "github.com/bernardoms/StarWarsPlanetAPI-GO/internal/client"
+	"github.com/bernardoms/StarWarsPlanetAPI-GO/test/unit/mock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -47,7 +48,8 @@ func TestShouldReturnPlanetWithSuccessFromGet(t *testing.T) {
 		}),
 	)
 	defer ts.Close()
-	client := client2.NewSwapiClient(ts.URL + "/")
+	mockLogger := new(mock.LoggerMock)
+	client := client2.NewSwapiClient(ts.URL+"/", mockLogger)
 	planet, err := client.GetPlanetByName("Aldebaran")
 
 	assert.Equal(t, nil, err)
@@ -68,7 +70,8 @@ func TestShouldReturnPlanetNilWhenApiReturnsNotFound(t *testing.T) {
 				w.WriteHeader(http.StatusNotFound)
 			}
 		}))
-	client := client2.NewSwapiClient(ts.URL + "/")
+	mockLogger := new(mock.LoggerMock)
+	client := client2.NewSwapiClient(ts.URL+"/", mockLogger)
 
 	planet, err := client.GetPlanetByName("Aldebaran")
 

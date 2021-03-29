@@ -20,8 +20,9 @@ import (
 func TestShouldGetPlanetByIdWithSuccess(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	returnedPlanet := repository.Planet{Name: "Aldebaran", Land: "Dry", Weather: "Dry", AppearanceQuantity: 2}
 
@@ -47,8 +48,11 @@ func TestShouldGetPlanetByIdWithSuccess(t *testing.T) {
 func TestShouldGetPlanetByIdReturnBadRequestInvalidId(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	mockLogger.On("LogWithFields", mock2.Anything, mock2.Anything, mock2.Anything, mock2.Anything).Return(nil)
+
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	r, _ := http.NewRequest("GET", "/v1/planets/123", nil)
 	w := httptest.NewRecorder()
@@ -61,6 +65,7 @@ func TestShouldGetPlanetByIdReturnBadRequestInvalidId(t *testing.T) {
 
 	h.GetPlanetById(w, r)
 
+	mockLogger.AssertNumberOfCalls(t, "LogWithFields", 1)
 	mongoMock.AssertNumberOfCalls(t, "FindById", 0)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -70,8 +75,11 @@ func TestShouldGetPlanetByIdReturnBadRequestInvalidId(t *testing.T) {
 func TestShouldGetPlanetByIdReturnInternalServerErrorWhenProblemWithRepository(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	mockLogger.On("LogWithFields", mock2.Anything, mock2.Anything, mock2.Anything, mock2.Anything).Return(nil)
+
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	id, _ := primitive.ObjectIDFromHex("5ea7208049e00ddb76994ede")
 
@@ -88,6 +96,8 @@ func TestShouldGetPlanetByIdReturnInternalServerErrorWhenProblemWithRepository(t
 
 	h.GetPlanetById(w, r)
 
+	mockLogger.AssertNumberOfCalls(t, "LogWithFields", 1)
+
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Equal(t, "{\"description\":\"error on repository\"}", w.Body.String())
 }
@@ -95,8 +105,9 @@ func TestShouldGetPlanetByIdReturnInternalServerErrorWhenProblemWithRepository(t
 func TestShouldReturnAllPlanetsWithoutFilter(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	returnedPlanets := []repository.Planet{{Name: "Aldebaran", Land: "Dry", Weather: "Dry", AppearanceQuantity: 2},
 		{Name: "Tattoine", Land: "Dry", Weather: "Dry", AppearanceQuantity: 1}}
@@ -116,8 +127,9 @@ func TestShouldReturnAllPlanetsWithoutFilter(t *testing.T) {
 func TestShouldReturnAllPlanetsWithoutFilterEmptyList(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	returnedPlanets := make([]repository.Planet, 0)
 
@@ -135,8 +147,9 @@ func TestShouldReturnAllPlanetsWithoutFilterEmptyList(t *testing.T) {
 func TestShouldReturnAllPlanetsWithFilter(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	returnedPlanets := []repository.Planet{{Name: "Aldebaran", Land: "Dry", Weather: "Dry", AppearanceQuantity: 2}}
 
@@ -155,8 +168,9 @@ func TestShouldReturnAllPlanetsWithFilter(t *testing.T) {
 func TestShouldRemovePlanetByIdWithSuccess(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	id, _ := primitive.ObjectIDFromHex("5ea7208049e00ddb76994ede")
 
@@ -180,8 +194,11 @@ func TestShouldRemovePlanetByIdWithSuccess(t *testing.T) {
 func TestShouldReturnBadRequestDeletePlanetInvalidId(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	mockLogger.On("LogWithFields", mock2.Anything, mock2.Anything, mock2.Anything, mock2.Anything).Return(nil)
+
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	vars := map[string]string{
 		"planetId": "123",
@@ -196,7 +213,7 @@ func TestShouldReturnBadRequestDeletePlanetInvalidId(t *testing.T) {
 	h.RemovePlanetById(w, r)
 
 	mongoMock.AssertNumberOfCalls(t, "Delete", 0)
-
+	mockLogger.AssertNumberOfCalls(t, "LogWithFields", 1)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Equal(t, "{\"description\":\"planet id is not a valid id\"}", w.Body.String())
 }
@@ -204,8 +221,10 @@ func TestShouldReturnBadRequestDeletePlanetInvalidId(t *testing.T) {
 func TestShouldReturnInternalServerErrorWhenThereIsErrorOnRepostioryWhenDeleting(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
+	mockLogger.On("LogWithFields", mock2.Anything, mock2.Anything, mock2.Anything, mock2.Anything).Return(nil)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	vars := map[string]string{
 		"planetId": "5ea7208049e00ddb76994ede",
@@ -223,6 +242,7 @@ func TestShouldReturnInternalServerErrorWhenThereIsErrorOnRepostioryWhenDeleting
 
 	h.RemovePlanetById(w, r)
 
+	mockLogger.AssertNumberOfCalls(t, "LogWithFields", 1)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Equal(t, "{\"description\":\"error on repository\"}", w.Body.String())
 }
@@ -230,8 +250,9 @@ func TestShouldReturnInternalServerErrorWhenThereIsErrorOnRepostioryWhenDeleting
 func TestShouldReturnCreatedWhenCreatePlanetWithSuccess(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	id, _ := primitive.ObjectIDFromHex("5ea7208049e00ddb76994ede")
 
@@ -264,9 +285,10 @@ func TestShouldReturnCreatedWhenCreatePlanetWithSuccess(t *testing.T) {
 func TestShouldReturnNotFoundWhenPlanetNotExist(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
+	mockLogger.On("LogWithFields", mock2.Anything, mock2.Anything, mock2.Anything, mock2.Anything).Return(nil)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
-
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 	films := make([]string, 0)
 	films = append(films, "film 1")
 	films = append(films, "film 2")
@@ -287,6 +309,7 @@ func TestShouldReturnNotFoundWhenPlanetNotExist(t *testing.T) {
 
 	h.SavePlanet(w, r)
 
+	mockLogger.AssertNumberOfCalls(t, "LogWithFields", 1)
 	mongoMock.AssertNumberOfCalls(t, "Save", 0)
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -294,8 +317,10 @@ func TestShouldReturnNotFoundWhenPlanetNotExist(t *testing.T) {
 func TestShouldReturnServerErrorWhenThereIsAnErrorCallingClient(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
+	mockLogger.On("LogWithFields", mock2.Anything, mock2.Anything, mock2.Anything, mock2.Anything).Return(nil)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	var swapi *client.SwapiPlanet
 
@@ -314,6 +339,7 @@ func TestShouldReturnServerErrorWhenThereIsAnErrorCallingClient(t *testing.T) {
 	h.SavePlanet(w, r)
 
 	mongoMock.AssertNumberOfCalls(t, "Save", 0)
+	mockLogger.AssertNumberOfCalls(t, "LogWithFields", 1)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Equal(t, "{\"description\":\"error calling client\"}", w.Body.String())
 }
@@ -321,8 +347,10 @@ func TestShouldReturnServerErrorWhenThereIsAnErrorCallingClient(t *testing.T) {
 func TestShouldReturnServerErrorWhenThereIsAnErrorCallingRepository(t *testing.T) {
 	mongoMock := new(mock.MongoMock)
 	swapiMock := new(mock.SwapiClientMock)
+	mockLogger := new(mock.LoggerMock)
+	mockLogger.On("LogWithFields", mock2.Anything, mock2.Anything, mock2.Anything, mock2.Anything).Return(nil)
 
-	h := handler.NewPlanetHandler(mongoMock, swapiMock)
+	h := handler.NewPlanetHandler(mongoMock, swapiMock, mockLogger)
 
 	films := make([]string, 0)
 	films = append(films, "film 1")
@@ -346,6 +374,7 @@ func TestShouldReturnServerErrorWhenThereIsAnErrorCallingRepository(t *testing.T
 
 	h.SavePlanet(w, r)
 
+	mockLogger.AssertNumberOfCalls(t, "LogWithFields", 1)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Equal(t, "{\"description\":\"error on repository\"}", w.Body.String())
 }

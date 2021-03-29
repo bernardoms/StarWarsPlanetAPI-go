@@ -8,17 +8,17 @@ import (
 
 type SwapiClient struct {
 	Endpoint string
-	log      *logger.Logger
+	log      logger.Interface
 }
 
-func NewSwapiClient(endpoint string, log *logger.Logger) *SwapiClient {
+func NewSwapiClient(endpoint string, log logger.Interface) *SwapiClient {
 	s := new(SwapiClient)
 	s.Endpoint = endpoint
 	s.log = log
 	return s
 }
 
-func (s SwapiClient) GetPlanetByName(name string) (*SwapiPlanet, error) {
+func (s *SwapiClient) GetPlanetByName(name string) (*SwapiPlanet, error) {
 	resp, err := http.Get(s.Endpoint + "planets?search=" + name)
 
 	if err != nil {
